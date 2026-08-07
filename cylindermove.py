@@ -13,80 +13,114 @@ MQTT_TOPIC = "cezeri/drone/komut" # Arayüzün mesaj gönderdiği ve bizim dinle
 #REAL_CONNECTION_STRING = '/dev/ttyACM0' 
 #BAUD_RATE = 57600 # ArduPilot'un varsayılan telemetri haberleşme hızı
 
-SIM_CONNECTION_STRING = 'tcp:127.0.0.1:5760'
+SIM_CONNECTION_STRING1 = 'tcp:127.0.0.1:5760'
+SIM_CONNECTION_STRING2 = 'tcp:127.0.0.1:5770'
 
-print(f"Drone baglantisi baslatiliyor: {SIM_CONNECTION_STRING}")
+print(f"Drone baglantilari baslatiliyor: {SIM_CONNECTION_STRING1}")
 # Drone ile bağlantıyı kurarken baud hızını da ekliyoruz
-drone = mavutil.mavlink_connection(SIM_CONNECTION_STRING)
+drone1 = mavutil.mavlink_connection(SIM_CONNECTION_STRING1)
+drone2 = mavutil.mavlink_connection(SIM_CONNECTION_STRING2)
 
 # ArduPilot'tan gelecek Heartbeat sinyalini duyana kadar kodu burada bekletiyoruz.
-drone.wait_heartbeat()
-print("Drone baglantisi basarili.")
+drone1.wait_heartbeat()
+drone2.wait_heartbeat()
+print("Drone baglantilari basarili.")
 
 # KOMUT FONKSİYONLARI
 def set_mode(mode_name):
     # ArduPilot'taki isimleri (örn: GUIDED), sistemin anladığı ID numaralarına çeviriyoruz.
-    mode_id = drone.mode_mapping()[mode_name]
+    mode_id1 = drone1.mode_mapping()[mode_name]
     # Drone'a hedef modu ayarlaması için MAVLink mesajı gönderiyoruz.
-    drone.mav.set_mode_send(
-        drone.target_system,
+    drone1.mav.set_mode_send(
+        drone1.target_system,
         mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-        mode_id
+        mode_id1
     )
+    mode_id2 = drone2.mode_mapping()[mode_name]
+    drone2.mav.set_mode_send(
+            drone2.target_system,
+            mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+            mode_id2
+        )
     print(f"Ucus modu ayarlandi: {mode_name}")
 
 def arm_drone():
     # Motorları ARM etmek için uzun formatlı komut gönderiyoruz.
     # Buradaki 2. parametre olan '1', ARM işlemini temsil eder.
-    drone.mav.command_long_send(
-        drone.target_system, drone.target_component, #Hangi cihaza gideceği, hangi bileşene gideceği (ardupilota gider)
+    drone1.mav.command_long_send(
+        drone1.target_system, drone1.target_component, #Hangi cihaza gideceği, hangi bileşene gideceği (ardupilota gider)
         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, #ArduPilot'a komutun konu başlığını (ARM,DİSARM) belirtir
         0, 1, 0, 0, 0, 0, 0, 0
     )
+    drone2.mav.command_long_send(
+            drone2.target_system, drone2.target_component, #Hangi cihaza gideceği, hangi bileşene gideceği (ardupilota gider)
+            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, #ArduPilot'a komutun konu başlığını (ARM,DİSARM) belirtir
+            0, 1, 0, 0, 0, 0, 0, 0
+        )
     print("ARM komutu gonderiliyor")
 
 def disarm_drone():
     # Motorları DISARM etmek için ARM komutunun aynısını gönderiyoruz,
     # fakat 2. parametreyi '0' yaparak sistemi motorlar durmuş hale getiriyoruz.
-    drone.mav.command_long_send(
-        drone.target_system, drone.target_component, 
+    drone1.mav.command_long_send(
+        drone1.target_system, drone1.target_component, 
         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
         0, 0, 0, 0, 0, 0, 0, 0
     )
+    drone2.mav.command_long_send(
+            drone2.target_system, drone2.target_component, 
+            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 
+            0, 0, 0, 0, 0, 0, 0, 0
+        )
     print("DISARM komutu gonderiliyor")
 def force_disarm_drone():
     # 2. Parametredeki 21196, ArduPilot'a her şeyi yoksay ve motorları durdur demektir.
-    drone.mav.command_long_send(
-        drone.target_system, drone.target_component,
+    drone1.mav.command_long_send(
+        drone1.target_system, drone1.target_component,
         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
         0, 0, 21196, 0, 0, 0, 0, 0
     )
+    drone2.mav.command_long_send(
+            drone2.target_system, drone2.target_component,
+            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+            0, 0, 21196, 0, 0, 0, 0, 0
+        )
     print("FORCE DISARM KOMUTU GONDERILDI")
 def takeoff_drone(altitude=10):
     # Bulunduğu konumdan dikey kalkış yapması için MAV_CMD_NAV_TAKEOFF komutu yolluyoruz.
     # En sondaki parametre (altitude) drone'un çıkacağı hedef yüksekliği belirtir.
-    drone.mav.command_long_send(
-        drone.target_system, drone.target_component,
+    drone1.mav.command_long_send(
+        drone1.target_system, drone1.target_component,
         mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, #Kalkış komutu olduğunu belirtir
         0, 0, 0, 0, 0, 0, 0, altitude
     )
+    drone2.mav.command_long_send(
+            drone2.target_system, drone2.target_component,
+            mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, #Kalkış komutu olduğunu belirtir
+            0, 0, 0, 0, 0, 0, 0, altitude
+        )
     print(f"TAKEOFF komutu gonderiliyor. Hedef irtifa: {altitude}m")
 
 def land_drone():
-    drone.mav.command_long_send(
-        drone.target_system, drone.target_component,
+    drone1.mav.command_long_send(
+        drone1.target_system, drone1.target_component,
         mavutil.mavlink.MAV_CMD_NAV_LAND, #İniş komutu olduğunu belirtir
         0, 0, 0, 0, 0, 0, 0, 0
     )
+    drone2.mav.command_long_send(
+            drone2.target_system, drone2.target_component,
+            mavutil.mavlink.MAV_CMD_NAV_LAND, #İniş komutu olduğunu belirtir
+            0, 0, 0, 0, 0, 0, 0, 0
+        )
     print("LAND komutu gonderiliyor.")
 
 def move_drone(dist_x, dist_y, dist_z):
     # Fonksiyonun ihtiyaç duyduğu tam 16 parametreyi sırasıyla gönderiyoruz
-    drone.mav.send(
+    drone1.mav.send(
         mavutil.mavlink.MAVLink_set_position_target_local_ned_message(
             0,                     # time_boot_ms (0: önemsiz)
-            drone.target_system,   # target_system
-            drone.target_component,# target_component
+            drone1.target_system,   # target_system
+            drone1.target_component,# target_component
             mavutil.mavlink.MAV_FRAME_LOCAL_OFFSET_NED, # Referans: Gövde
             int(0b0000111111111000), # Maske: Sadece konumu (x,y,z) dinle
             dist_x,                # X (m)
@@ -99,11 +133,11 @@ def move_drone(dist_x, dist_y, dist_z):
     )
     print(f"MOVE komutu uygulandi: {dist_x}m, {dist_y}m, {dist_z}m")
 
-def send_velocity(vx, vy, vz):
+def send_velocity(hedef_drone, vx, vy, vz):
     # Drone'a maskeleme yaparak sadece hız komutlarını dikkate almasını söylüyoruz.
-    drone.mav.send(
+    hedef_drone.mav.send(
         mavutil.mavlink.MAVLink_set_position_target_local_ned_message(
-            0, drone.target_system, drone.target_component,
+            0, hedef_drone.target_system, hedef_drone.target_component,
             mavutil.mavlink.MAV_FRAME_LOCAL_NED,
             int(0b0000111111000111), # Maske: Pozisyon ve ivmeyi yoksay, sadece HIZI (VX,VY,VZ) oku
             0, 0, 0,                 # X, Y, Z Pozisyon (Maskelendiği için önemsiz)
@@ -130,29 +164,33 @@ def execute_cylinder_maneuver():
     while time.time() - start_time < duration:
         # Eger baska bir komut gelirse (ornek: DISARM), bu donguyu hemen kir
         if stop_maneuver_flag:
-            print("Silindirik hareket iptal edildi!")
+            print("Sarmal sürü hareketi iptal edildi!")
             break
             
         t = time.time() - start_time
         
-        # Hız vektörlerinin hesaplanması
+        # 1. drone için hız vektörlerinin hesaplanması
         vx = radius * omega * math.cos(omega * t)
         vz = -radius * omega * math.sin(omega * t) # Z ekseni asagiya dogru (+), yukariya dogru (-) 
         vy = forward_speed
         
-        send_velocity(vx, vy, vz)
+        # Aynı anda her iki drone'a kendi hızlarını yolluyoruz
+        send_velocity(drone1, vx, vy, vz)     # 1. Drone sarmal çizer
+        send_velocity(drone2, 0, vy, 0)       # 2. Drone tam merkezden dümdüz ilerler
+
         time.sleep(0.1) # Komutu 10Hz (saniyede 10 kere) sıklıkla gonder
         
-    # Manevra bittiginde veya durduruldugunda drone'un sürüklenmemesi için hızları sıfırla
-    send_velocity(0, 0, 0)
-    print("Silindirik gorev tamamlandi.")
+    # Manevra bittiginde veya durduruldugunda drone'ların sürüklenmemesi için hızları sıfırla
+    send_velocity(drone1, 0, 0, 0)
+    send_velocity(drone2, 0, 0, 0)
+    print("Silindirik sürü gorevi tamamlandi.")
 
 
 # ACK DİNLEYİCİSİ
 def wait_command_ack(expected_cmd_id, timeout=2):
     # ArduPilot'tan gelecek COMMAND_ACK mesajını arıyoruz. 
     # Sadece gönderdiğimiz emrin ID'sine sahip olan cevabı (condition) yakalıyoruz.
-    msg = drone.recv_match(type='COMMAND_ACK', condition=f'COMMAND_ACK.command=={expected_cmd_id}', blocking=True, timeout=timeout)
+    msg = drone1.recv_match(type='COMMAND_ACK', condition=f'COMMAND_ACK.command=={expected_cmd_id}', blocking=True, timeout=timeout)
     
     if msg is None:
         return "Zaman Asimi (Cevap Alinamadi)"
@@ -190,7 +228,7 @@ def on_message(client, userdata, msg):
         time.sleep(1) 
         
         # Yeni emri vermeden hemen önce, kutudaki eski onayları (varsa) atıyoruz
-        while drone.recv_match(type='COMMAND_ACK', blocking=False):
+        while drone1.recv_match(type='COMMAND_ACK', blocking=False):
             pass
             
         arm_drone()
@@ -202,7 +240,7 @@ def on_message(client, userdata, msg):
     elif command == "DISARM":
         global stop_maneuver_flag
         stop_maneuver_flag = True # Varsa arka plan görevini durdur
-        while drone.recv_match(type='COMMAND_ACK', blocking=False):
+        while drone1.recv_match(type='COMMAND_ACK', blocking=False):
             pass
         
         disarm_drone()
@@ -216,7 +254,7 @@ def on_message(client, userdata, msg):
     elif command == "FORCE_DISARM":
         stop_maneuver_flag = True
         # Acil durumda bekleme yapmadan önce kutuyu temizliyoruz
-        while drone.recv_match(type='COMMAND_ACK', blocking=False):
+        while drone1.recv_match(type='COMMAND_ACK', blocking=False):
             pass
             
         force_disarm_drone()
@@ -226,7 +264,7 @@ def on_message(client, userdata, msg):
         print(f"FORCE DISARM Sonucu: {sonuc}")
 
     elif command == "TAKEOFF":
-        while drone.recv_match(type='COMMAND_ACK', blocking=False):
+        while drone1.recv_match(type='COMMAND_ACK', blocking=False):
             pass
             
         takeoff_drone(10)  
@@ -235,7 +273,7 @@ def on_message(client, userdata, msg):
         print(f"TAKEOFF Komutu Sonucu: {sonuc}")
         
     elif command == "LAND":
-        while drone.recv_match(type='COMMAND_ACK', blocking=False):
+        while drone1.recv_match(type='COMMAND_ACK', blocking=False):
             pass
             
         land_drone() 
@@ -244,8 +282,8 @@ def on_message(client, userdata, msg):
         print(f"LAND Komutu Sonucu: {sonuc}")
 
     elif command == "CYLINDER":
-        if not drone.motors_armed():
-            print("CYLINDER Reddedildi: Motorlar ARM degil")
+        if not drone1.motors_armed() or not drone2.motors_armed():
+            print("CYLINDER Reddedildi: Drone'lardan biri veya ikisi de ARM degil")
         else:
             set_mode("GUIDED")
             # MQTT'nin kitlenmemesi için fonksiyonu arka planda bir thread olarak başlatıyoruz
@@ -258,7 +296,7 @@ def on_message(client, userdata, msg):
             coords = command.split(":")[1] 
             x, y, z = map(float, coords.split(",")) #Gelen xyz değerlerini bitlere dönüştürür.
             
-            if not drone.motors_armed():
+            if not drone1.motors_armed():
                 print("MOVE Reddedildi: Motorlar ARM degil")
             else:
                 set_mode("GUIDED")
