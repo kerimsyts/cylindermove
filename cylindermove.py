@@ -151,8 +151,8 @@ def execute_cylinder_maneuver():
     global stop_maneuver_flag
     stop_maneuver_flag = False
     
-    radius = 2.0         # Çemberin yarıçapı (metre)
-    omega = 0.6          # Açısal hız (ne kadar hızlı döneceği)
+    radius = 4.0         # Çemberin yarıçapı (metre)
+    omega = 0.3          # Açısal hız (ne kadar hızlı döneceği)
     forward_speed = 1.0  # Y ekseninde (sağa doğru) ilerleme hızı (m/s)
     tur_sayisi = 1
     duration = tur_sayisi * (2 * math.pi) / omega
@@ -185,7 +185,6 @@ def execute_cylinder_maneuver():
     send_velocity(drone2, 0, 0, 0)
     print("Silindirik sürü gorevi tamamlandi.")
 
-
 # ACK DİNLEYİCİSİ
 def wait_command_ack(expected_cmd_id, timeout=2):
     # ArduPilot'tan gelecek COMMAND_ACK mesajını arıyoruz. 
@@ -206,7 +205,6 @@ def wait_command_ack(expected_cmd_id, timeout=2):
         else:
             return "Reddedildi"
 # -----------------------------------------------------------
-
 
 # MQTT DİNLEYİCİSİ
 def on_connect(client, userdata, flags, rc):
@@ -282,6 +280,13 @@ def on_message(client, userdata, msg):
         print(f"LAND Komutu Sonucu: {sonuc}")
 
     elif command == "CYLINDER":
+        while drone1.recv_match(blocking=False): #Drone'ların durumu için son modu alma (arm için)
+            pass
+        while drone2.recv_match(blocking=False): 
+            pass
+
+        drone1.recv_match(type='HEARTBEAT', blocking=True, timeout=1.5)
+        drone2.recv_match(type='HEARTBEAT', blocking=True, timeout=1.5)
         if not drone1.motors_armed() or not drone2.motors_armed():
             print("CYLINDER Reddedildi: Drone'lardan biri veya ikisi de ARM degil")
         else:
