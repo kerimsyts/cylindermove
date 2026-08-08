@@ -113,7 +113,7 @@ def execute_cylinder_maneuver():
 
     start_time = time.time()
     
-    while time.time() - start_time < duration:
+    while time.time() - start_time < duration: #başlangıca göre geçen zamanı hesapla. duration ile eşitlenene kadar fonksiyonu çalıştır.
         if stop_maneuver_flag:
             print("Merkez gorevi iptal edildi!")
             break
