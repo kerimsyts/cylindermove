@@ -10,15 +10,15 @@ MQTT_PORT = 1883
 MQTT_TOPIC = "cezeri/drone1/komut"
 
 # GERÇEK DONANIM BAĞLANTISI (Raspberry Pi USB Portu)
-#REAL_CONNECTION_STRING = '/dev/ttyACM0'
-#BAUD_RATE = 57600
-
-SIM_CONNECTION_STRING = 'tcp:127.0.0.1:5760'
-print(f"Drone bağlantisi baslatiliyor: {SIM_CONNECTION_STRING}")
-drone1 = mavutil.mavlink_connection(SIM_CONNECTION_STRING)
-
-#print(f"Drone baglantisi baslatiliyor: {REAL_CONNECTION_STRING}")
-#drone1 = mavutil.mavlink_connection(REAL_CONNECTION_STRING, baud=BAUD_RATE)
+REAL_CONNECTION_STRING = '/dev/ttyACM0'
+BAUD_RATE = 57600
+#------------------------------------------------------------------
+#SIM_CONNECTION_STRING = 'tcp:127.0.0.1:5760'
+#print(f"Drone bağlantisi baslatiliyor: {SIM_CONNECTION_STRING}")
+#drone1 = mavutil.mavlink_connection(SIM_CONNECTION_STRING)
+#------------------------------------------------------------------
+print(f"Drone baglantisi baslatiliyor: {REAL_CONNECTION_STRING}")
+drone1 = mavutil.mavlink_connection(REAL_CONNECTION_STRING, baud=BAUD_RATE)
 drone1.wait_heartbeat()
 print("Drone baglantisi basarili.")
 
