@@ -56,7 +56,7 @@ def force_disarm_drone():
     )
     print("FORCE DISARM KOMUTU GONDERILDI")
 
-def takeoff_drone(altitude=10):
+def takeoff_drone(altitude=15):
     drone2.mav.command_long_send(
         drone2.target_system, drone2.target_component,
         mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,
@@ -187,7 +187,7 @@ def on_message(client, userdata, msg):
         while drone2.recv_match(type='COMMAND_ACK', blocking=False):
             pass
             
-        takeoff_drone(10) 
+        takeoff_drone(15) 
         sonuc = wait_command_ack(22)
         print(f"TAKEOFF Komutu Sonucu: {sonuc}")
         
